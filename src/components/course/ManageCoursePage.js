@@ -15,6 +15,13 @@ class ManageCoursePage extends Component {
         };
 
         this.updateCourseState = this.updateCourseState.bind(this);
+        this.saveCourse = this.saveCourse.bind(this);
+    }
+
+    componentWillReceiveProps(nextProps) {
+        if(this.props.course.id != nextProps.course.id) {
+            this.setState({course: Object.assign({}, nextProps.course)});
+        }
     }
 
     updateCourseState(event) {
@@ -24,15 +31,21 @@ class ManageCoursePage extends Component {
         return this.setState({course: course});
     }
 
+    saveCourse(event) {
+        event.preventDefault();
+        this.props.actions.saveCourse(this.state.course);
+        this.context.router.push('/courses');
+    }
     render() {
         return (
             <div>
                 <h1>Manage Course</h1>
                 <CourseForm
-                    allAuthors={this.props.authors}
+                    allAuthors = {this.props.authors}
                     onChange = {this.updateCourseState}
-                    course={this.state.course}
-                    errors={this.state.errors}
+                    onSave = {this.saveCourse}
+                    course = {this.state.course}
+                    errors = {this.state.errors}
                 />
             </div>
         );
@@ -41,11 +54,29 @@ class ManageCoursePage extends Component {
 
 ManageCoursePage.propTypes = {
     course: PropTypes.object.isRequired,
-    authors: PropTypes.array.isRequired
+    authors: PropTypes.array.isRequired,
+    actions: PropTypes.object.isRequired
 };
 
+ManageCoursePage.contextTypes = {
+    router: PropTypes.object
+};
+
+function getCourseById(courses, id) {
+
+    const course = courses.filter(course => course.id == id);
+    if(course.length) return course[0];
+    return null;
+}
+
 function mapStateToProps(state, ownProps) {
+    const courseId = ownProps.params.id;
+
     let course = {id: '', watchHref: '', title: '', authorId: '', length: '', category: ''};
+
+    if(courseId && state.courses.length > 0) {
+        course = getCourseById(state.courses, courseId);
+    }
 
     const authorsFromattedForDropdown = state.authors.map(author => {
         return {
